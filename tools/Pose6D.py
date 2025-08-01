@@ -460,8 +460,7 @@ if __name__ == '__main__':
     print()
     
     opt.num_objects = 7
-    # opt.num_points = 1000
-    opt.num_points = 2000
+    opt.num_points = 1000
     opt.outfpre = 'trained_models/PoseIndustrial6DMultiRGBOnlyRandomized' + modelString
 
     opt.log_dir = 'experiments/PoseIndustrial6DMultiRGBOnlyRandomized' + modelString + str(opt.num_points)
@@ -492,10 +491,10 @@ if __name__ == '__main__':
     opt.decay_start = False
     optimizer = optim.Adam(estimator.parameters(), lr=opt.lr, weight_decay=0.00001)
 
-    dataset = PoseDataset('train', opt.num_points, concatmethod=concat, maskedmethod=mask)
+    dataset = PoseDataset('all', opt.num_points, concatmethod=concat, maskedmethod=mask)
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=opt.batch_size, shuffle=True, num_workers=opt.workers)
 
-    test_dataset = PoseDataset('test', opt.num_points, concatmethod=concat, maskedmethod=mask)
+    test_dataset = PoseDataset('all', opt.num_points, concatmethod=concat, maskedmethod=mask)
     testdataloader = torch.utils.data.DataLoader(test_dataset, batch_size=int(opt.batch_size/2), shuffle=True, num_workers=opt.workers)
 
     anotdataloader = AnotDataset('all', opt.num_points, concatmethod=concat, maskedmethod=mask)
