@@ -1,0 +1,15 @@
+stats_dataset.py
+    cria histogramas da distruibição do dataset por distancias e numero de deteções
+
+Pose6D.py
+    --train 
+        vai treinar
+
+    --run
+        mostra o resultado obtido da predição da rede
+
+    --metrics
+        mostra o valor de metricas
+
+    --annotate
+        utiliza o modelo para fazer anotações

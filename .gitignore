@@ -1,0 +1,34 @@
+# Ignorar tudo dentro de local/
+experiments/
+imgs/
+trained_models/
+
+# Incluir apenas estas subpastas de local/
+!tools/**
+!dataset/**
+!lib/**
+
+# Ignorar pycache, binários e ficheiros compilados
+__pycache__/
+*.pyc
+*.so
+*.o
+*.out
+*.a
+*.dll
+*.pyd
+*.egg-info/
+*.ipynb_checkpoints/
+*.log
+
+# Ignorar ficheiros grandes comuns de machine learning
+*.pt
+*.pth
+*.ckpt
+*.h5
+*.npy
+*.npz
+*.zip
+*.tar.gz
+*.tar
+*.rar
