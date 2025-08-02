@@ -444,7 +444,7 @@ if __name__ == '__main__':
         opt.outf = f'trained_models/{modelString}/8-img_velodyne-model-pc_velodyne-pc_model'
         concat = "velodyne"
         mask = "model"
-        print("option7- img_velodyne-model-pc_velodyne-pc_model")
+        print("option8- img_velodyne-model-pc_velodyne-pc_model")
 
     opt.modalities = 0
     if opt.modalities == 0:

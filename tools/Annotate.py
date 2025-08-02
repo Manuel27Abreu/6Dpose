@@ -108,12 +108,16 @@ class Annotate:
 
             predictions = []
             for i in range(rt.shape[0]):
+                centroide = velodyne_gt[i].mean(dim=0)
+                dist_centroide = torch.norm(centroide).item()
+
                 T = self.computeT(pred_r[i], pred_t[i])
                 T = T.detach().cpu().numpy()
 
                 x, y, z = T[0][3], T[1][3], T[2][3]
                 dist = math.sqrt(x**2 + y**2 + z**2)
-                if dist < 20:
+                print("distancia pred", dist, "velodyne", dist_centroide)
+                if dist < 20 and dist_centroide < 20:
                     # guardar no ficheiro
                     with open(file_name[i], 'w') as f:
                         for row in T:
