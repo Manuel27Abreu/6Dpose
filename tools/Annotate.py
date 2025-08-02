@@ -102,6 +102,8 @@ class Annotate:
                     pred_r, pred_t, pred_c, _ = self.estimator(img, depth_vel*Depth2Enable, target*PC1Enable, model_gt*PC2Enable, choose, idx)
                 elif self.option == 7:
                     pred_r, pred_t, pred_c, _ = self.estimator(img, depth_vel*Depth2Enable, velodyne_gt*PC1Enable, target*PC2Enable, choose, idx)
+                elif self.option == 8:
+                    pred_r, pred_t, pred_c, _ = self.estimator(img, depth_vel*Depth2Enable, velodyne_gt*PC1Enable, model_gt*PC2Enable, choose, idx)
 
 
             predictions = []
@@ -111,7 +113,6 @@ class Annotate:
 
                 x, y, z = T[0][3], T[1][3], T[2][3]
                 dist = math.sqrt(x**2 + y**2 + z**2)
-                print("dist: ", dist)
                 if dist < 20:
                     # guardar no ficheiro
                     with open(file_name[i], 'w') as f:
@@ -119,6 +120,7 @@ class Annotate:
                             formatted_row = ' '.join(f"{val:.5f}" for val in row)
                             f.write(formatted_row + " ; ") 
                 else:
+                    tqdm.write(f"Matriz identidade")
                     # escrever matriz identidade
                     identity = [
                         [1.0, 0.0, 0.0, 0.0],
@@ -126,9 +128,10 @@ class Annotate:
                         [0.0, 0.0, 1.0, 0.0],
                         [0.0, 0.0, 0.0, 1.0]
                     ]
-                    for row in identity:
-                        formatted_row = ' '.join(f"{val:.5f}" for val in row)
-                        f.write(formatted_row + " ; ")
+                    with open(file_name[i], 'w') as f:
+                        for row in identity:
+                            formatted_row = ' '.join(f"{val:.5f}" for val in row)
+                            f.write(formatted_row + " ; ")
 
     def computeT(self, pred_r, pred_t):
         bs = 1

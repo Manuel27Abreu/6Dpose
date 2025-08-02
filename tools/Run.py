@@ -89,18 +89,12 @@ class Run:
                     pred_r, pred_t, pred_c, _ = self.estimator(img, depth_vel*Depth2Enable, target*PC1Enable, model_gt*PC2Enable, choose, idx)
                 elif self.option == 7:
                     pred_r, pred_t, pred_c, _ = self.estimator(img, depth_vel*Depth2Enable, velodyne_gt*PC1Enable, target*PC2Enable, choose, idx)
+                elif self.option == 8:
+                    pred_r, pred_t, pred_c, _ = self.estimator(img, depth_vel*Depth2Enable, velodyne_gt*PC1Enable, model_gt*PC2Enable, choose, idx)
 
             loss, dis, new_points, new_target = self.criterion(pred_r, pred_t, pred_c, modelPoints_W, modelPoints, idx, points, self.opt.w, self.opt.refine_start)
 
             for b in range(dis.shape[0]):
-                import math
-                angle = math.pi / 2  # 90 graus
-                q = torch.tensor([0.0, 0.0, math.sin(angle/2), math.cos(angle/2)])  # eixo Z, [x, y, z, w]
-                t = torch.zeros(3)
-
-                T = self.computeT(q, t)
-                print(T)
-
                 T = self.computeT(pred_r[b], pred_t[b])
                 T = T.detach().cpu().numpy()
 

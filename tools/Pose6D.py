@@ -440,6 +440,11 @@ if __name__ == '__main__':
         concat = "velodyne"
         mask = "model"
         print("option7- img_velodyne-model-pc_velodyne-pc_depth")
+    elif opt.option == 8:
+        opt.outf = f'trained_models/{modelString}/8-img_velodyne-model-pc_velodyne-pc_model'
+        concat = "velodyne"
+        mask = "model"
+        print("option7- img_velodyne-model-pc_velodyne-pc_model")
 
     opt.modalities = 0
     if opt.modalities == 0:
