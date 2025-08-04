@@ -116,7 +116,7 @@ class Annotate:
 
                 x, y, z = T[0][3], T[1][3], T[2][3]
                 dist = math.sqrt(x**2 + y**2 + z**2)
-                print("distancia pred", dist, "velodyne", dist_centroide)
+                # print("distancia pred", dist, "velodyne", dist_centroide)
                 if dist < 20 and dist_centroide < 20:
                     # guardar no ficheiro
                     with open(file_name[i], 'w') as f:
@@ -124,7 +124,7 @@ class Annotate:
                             formatted_row = ' '.join(f"{val:.5f}" for val in row)
                             f.write(formatted_row + " ; ") 
                 else:
-                    tqdm.write(f"Matriz identidade")
+                    # tqdm.write(f"Matriz identidade")
                     # escrever matriz identidade
                     identity = [
                         [1.0, 0.0, 0.0, 0.0],
