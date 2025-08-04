@@ -391,7 +391,7 @@ class Train:
             if test_dis <= best_test:
                 best_test = test_dis
 
-                torch.save(self.estimator.state_dict(), '{0}/pose_model_{1}_{2}.pth'.format(self.opt.outf, epoch, test_dis))
+                # torch.save(self.estimator.state_dict(), '{0}/pose_model_{1}_{2}.pth'.format(self.opt.outf, epoch, test_dis))
                 torch.save(self.estimator.state_dict(), '{0}/pose_model_best.pth'.format(self.opt.outf))
                 print(epoch, '>>>>>>>>----------BEST TEST MODEL SAVED---------<<<<<<<<')
                 stale=0
