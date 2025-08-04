@@ -394,9 +394,9 @@ class Train:
                 # torch.save(self.estimator.state_dict(), '{0}/pose_model_{1}_{2}.pth'.format(self.opt.outf, epoch, test_dis))
                 torch.save(self.estimator.state_dict(), '{0}/pose_model_best.pth'.format(self.opt.outf))
                 print(epoch, '>>>>>>>>----------BEST TEST MODEL SAVED---------<<<<<<<<')
-                stale=0
+                stale = 0
             else:
-                stale=stale+1
+                stale = stale + 1
 
             # discord.post(content=" Windows Current 6D pose error Multi v3 (Randomized train) (No Resize) New Loss from GT pose Total points "+str(opt.num_points)+" ("+str(modelString)+"): "+str(test_dis)+" with best "+str(best_test)+"\n")
 
@@ -404,7 +404,7 @@ class Train:
                 self.opt.lr *= self.opt.lr_rate
                 self.estimator.load_state_dict(torch.load('{0}/pose_model_best.pth'.format(self.opt.outf)))
                 self.optimizer = optim.Adam(self.estimator.parameters(), lr=self.opt.lr , weight_decay=0.00001)
-                stale=0
+                stale = 0
             
         torch.save(self.estimator.state_dict(), '{0}/pose_model_final.pth'.format(self.opt.outf))
 

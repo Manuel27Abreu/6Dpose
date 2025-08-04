@@ -1313,6 +1313,33 @@ class PoseNetMultiRESNET18(nn.Module):
 
 
 
+class PoseNetFeat(nn.Module):
+    def __init__(self, num_points):
+        super(PoseNetFeat, self).__init__()
+        self.conv1 = torch.nn.Conv1d(3, 64, 1)
+        self.conv2 = torch.nn.Conv1d(64, 128, 1)
+        self.conv5 = torch.nn.Conv1d(128, 512, 1)
+        self.conv6 = torch.nn.Conv1d(512, 1024, 1)
+
+        self.ap1 = torch.nn.AvgPool1d(num_points)
+        self.num_points = num_points
+
+    def forward(self, x):
+        x = F.relu(self.conv1(x))
+        #emb = F.relu(self.e_conv1(emb))
+        #pointfeat_1 = torch.cat((x, emb), dim=1)
+
+        x = F.relu(self.conv2(x))
+        #emb = F.relu(self.e_conv2(emb))
+        #pointfeat_2 = torch.cat((x, emb), dim=1)
+
+        x = F.relu(self.conv5(x))
+        x = F.relu(self.conv6(x))
+
+        ap_x = self.ap1(x)
+
+        ap_x = ap_x.view(-1, 1024, 1).repeat(1, 1, self.num_points)
+        return ap_x #1024
 
 
 
@@ -1407,6 +1434,134 @@ class PoseNetMultiCUSTOMPointsX(nn.Module):
         self.num_obj = num_obj
         self.attn = TransformerEncoder(512, 4)
         self.net2 = Conv1DNetwork(50)
+        self.net1 = PoseNetFeat(num_points)
+        self.net3 = PoseNetFeat(num_points)
+        self.netFinal = Conv1DNetwork(22)
+
+    def embed_fn(self, x, L_embed=6):
+        rets = []
+        rets.append(x[0])
+        rets.append(x[1])
+        rets.append(x[2])
+        for i in range(L_embed):
+            for fn in [np.sin, np.cos]:
+                a=fn(2.**i * x)
+                rets.append(a[0])
+                rets.append(a[1])
+                rets.append(a[2])                
+        return rets 
+
+    def forward(self, img, depth_vel, x,velodyne, choose, obj):
+        # print("Dentro rede ------------------")
+
+
+        #net1_input:  torch.Size([64, 3, 1000])
+        #net1:  torch.Size([15, 64, 512])
+        #net3_input:  torch.Size([64, 3, 1000])
+        #net3:  torch.Size([15, 64, 512])
+        #net2_input:  torch.Size([64, 50, 500])
+        #net2 torch.Size([7, 64, 512])
+        #netnetFinal_input:  torch.Size([64, 22, 512])
+        #netnetFinal torch.Size([8, 64, 512])
+        batch = img.shape[0]
+ 
+        rgb = img[:, 0:3, :, :]
+        depth = img[:, 3, :, :].unsqueeze(0).permute(1, 0, 2, 3)
+        
+        # print("img.shape", rgb.shape)
+        # print("depth.shape", depth.shape)
+        # print("depth_vel", depth_vel.shape)
+
+        out_img = self.cnn(rgb, depth, depth_vel)
+        # print("out img", out_img.shape)
+
+        bs, di, _ = out_img.size()
+
+        emb = out_img.view(di, bs, -1)
+        emb = F.adaptive_avg_pool2d(emb, (50,500))
+        emb = emb.view(di, 50, 500)
+        # print("emb.shape", emb.shape)
+
+        x = x.transpose(2, 1).contiguous()
+        velodyne = velodyne.transpose(2, 1).contiguous()
+        #print("net1_input: ", x.shape)
+        ap_x = self.net1(x).contiguous()
+        #print("net1: ", ap_x.shape)
+
+        bs, di, _ = ap_x.size()
+
+        ap_x = ap_x.view(bs, di, 1000)
+        ap_x = F.adaptive_avg_pool2d(ap_x, (15, 512))
+        ap_x = ap_x.view(15,bs, 512)
+        #print("PC vector Adapt: ", ap_x.shape)
+        #print("net3_input: ", velodyne.shape)
+
+        ap_x2 = self.net3(velodyne).contiguous()
+        #print("net3: ", ap_x2.shape)
+
+        ap_x2 = ap_x2.view(bs, di, 1000)
+        ap_x2 = F.adaptive_avg_pool2d(ap_x2, (15,512))
+        ap_x2 = ap_x2.view( 15,bs, 512)
+        #print("PC2 vector Adapt: ",ap_x2.shape)
+
+        ap_x = ap_x + ap_x2
+        #print("net2_input: ", emb.shape)
+
+        ap_y = self.net2(emb).contiguous()
+        #print("net2", ap_y.shape)
+
+        ap_x, ap_y = self.attn(F.dropout(ap_x, p=0.0025),F.dropout(ap_y, p=0.0025))
+
+        ap_x = ap_x.permute(1, 0, 2) 
+        ap_y = ap_y.permute(1, 0, 2) 
+    
+        #print(ap_x.shape,ap_y.shape)
+        ap_x = torch.cat([ap_x, ap_y], 1)
+        #print("netnetFinal_input: ", ap_x.shape)
+
+        ap_x = self.netFinal(F.dropout(ap_x, p=0.0025))
+        #print("netnetFinal", ap_x.shape)
+
+        ap_x = ap_x.permute(1, 0, 2)
+        ap_x = ap_x.flatten(start_dim=1)
+        rx = F.tanh(self.compressr2(F.dropout(ap_x, p=0.005)))
+        tx = (self.compresst2(F.dropout(ap_x, p=0.005)))
+
+        rx = rx.view(batch, self.num_obj, 4)
+        tx = tx.view(batch, self.num_obj, 3)
+
+        # print("rx.shape", rx.shape)
+        # print("obj", obj)
+        # print(rx)
+        # print("tx.shape", tx.shape)
+
+        batch_indices = torch.arange(rx.size(0)).cuda()
+
+        rx = rx[batch_indices, obj]
+        tx = tx[batch_indices, obj]
+
+        # print("rx.shape", rx.shape)
+        # print(rx)
+
+        # print("rx.shape", rx.shape)
+        # print("tx.shape", tx.shape)
+
+        # print("Dentro rede ------------------")
+
+        return rx, tx, None, emb.detach()
+    
+class PoseNetMultiCUSTOMPointsX_old(nn.Module):
+    def __init__(self, modelRGB, modelDepth, modelDepth2, num_points, num_obj, embchannels):
+        super(PoseNetMultiCUSTOMPointsX_old, self).__init__()
+        self.num_points = num_points
+
+        self.cnn = RGBDFeatureExtractor2CUSTOM(modelRGB,modelDepth, modelDepth2,num_heads=4,emb=embchannels)
+        
+        self.compressr2 = torch.nn.Linear(4096, num_obj*4)
+        self.compresst2 = torch.nn.Linear(4096, num_obj*3)
+        self.num_obj = num_obj
+        self.attn = TransformerEncoder(512, 4)
+        self.net2 = Conv1DNetwork(50)
         self.net1 = Conv1DNetwork(3)
         self.net3 = Conv1DNetwork(3)
         self.netFinal = Conv1DNetwork(22)
@@ -1451,7 +1606,7 @@ class PoseNetMultiCUSTOMPointsX(nn.Module):
         velodyne = velodyne.transpose(2, 1).contiguous()
 
         ap_x = self.net1(x).contiguous()
-        # print("PC vector: ", ap_x.shape)
+        print("net1: ", ap_x.shape)
 
         bs, di, _ = ap_x.size()
 
@@ -1461,6 +1616,7 @@ class PoseNetMultiCUSTOMPointsX(nn.Module):
         # print("PC vector Adapt: ", ap_x.shape)
 
         ap_x2 = self.net3(velodyne).contiguous()
+        print("net3: ", ap_x2.shape)
 
         ap_x2 = ap_x2.view(di, bs, 512)
         ap_x2 = F.adaptive_avg_pool2d(ap_x2, (15,512))
@@ -1470,6 +1626,8 @@ class PoseNetMultiCUSTOMPointsX(nn.Module):
         ap_x = ap_x + ap_x2
 
         ap_y = self.net2(emb).contiguous()
+        print("net2", ap_y.shape)
+        
         ap_x, ap_y = self.attn(F.dropout(ap_x, p=0.0025),F.dropout(ap_y, p=0.0025))
 
         ap_x = ap_x.permute(1, 0, 2) 
