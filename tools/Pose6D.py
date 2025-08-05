@@ -32,7 +32,8 @@ from tools.Run import Run
 from tools.Metrics import Metrics
 from tools.Annotate import Annotate
 
-from lib.network_attnMOD_Manuel import PoseNetMultiCUSTOMPointsX,PoseNetMultiCUSTOM
+from lib.network_attnMOD_Manuel import PoseNetMultiCUSTOM
+from lib.network_attnMOD_Manuel import PoseNetMultiCUSTOMPointsX_old as PoseNetMultiCUSTOMPointsX
 
 from lib.lossMOD_Manuel import Lossv2
 from lib.utils import setup_logger
@@ -393,6 +394,7 @@ parser.add_argument('--train', action='store_true', help='training mode')
 parser.add_argument('--run', action='store_true', help='run mode')
 parser.add_argument('--metrics', action='store_true', help='metrics mode')
 parser.add_argument('--annotate', action='store_true', help='annotate mode')
+parser.add_argument('--class_id', type=int, default = None, help='treinar apenas para a classe especifica')
 opt = parser.parse_args()
 
 
@@ -460,6 +462,10 @@ if __name__ == '__main__':
         opt.outf += '/RGB-Depth1-PC1'
         print("RGB, Depth1 e PC1")
     print()
+
+    if opt.class_id != None:
+        print("Vamos treinar um modelo para a classe ", opt.class_id)
+        opt.outf += f' class{opt.class_id}'
 
     print("Out folder", opt.outf)
     print()

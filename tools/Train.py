@@ -57,6 +57,28 @@ class Train:
         # TREINO
         for i, data in tqdm(enumerate(self.dataloader, 0), total=len(self.dataloader), desc=f'Epoch {epoch}', unit='batch'):
             pc_depth_W, pc_depth, pc_velodyne_W, pc_velodyne, pc_model_W, pc_model, img, depth_vel, modelPoints, modelPointsGT, rt, idx = data
+            if math.sqrt(rt[0][0][3]**2 + rt[0][1][3]**2 + rt[0][2][3]**2) < 0.05:
+                continue
+
+            if self.opt.class_id != None:
+                mask = idx == self.opt.class_id
+
+                if mask.sum() == 0:
+                    continue
+
+                pc_depth_W = pc_depth_W[mask]
+                pc_depth = pc_depth[mask]
+                pc_velodyne_W = pc_velodyne_W[mask]
+                pc_velodyne = pc_velodyne[mask]
+                pc_model_W = pc_model_W[mask]
+                pc_model = pc_model[mask]
+                img = img[mask]
+                depth_vel = depth_vel[mask]
+                modelPoints = modelPoints[mask]
+                modelPointsGT = modelPointsGT[mask]
+                rt = rt[mask]
+                idx = idx[mask]
+
 
             if self.modalities == 0:
                 RGBEnable = float(1)
@@ -143,6 +165,25 @@ class Train:
             pc_depth_W, pc_depth, pc_velodyne_W, pc_velodyne, pc_model_W, pc_model, img, depth_vel, modelPoints, modelPointsGT, rt, idx = data
             if math.sqrt(rt[0][0][3]**2 + rt[0][1][3]**2 + rt[0][2][3]**2) < 0.05:
                 continue
+
+            if self.opt.class_id != None:
+                mask = idx == self.opt.class_id
+
+                if mask.sum() == 0:
+                    continue
+
+                pc_depth_W = pc_depth_W[mask]
+                pc_depth = pc_depth[mask]
+                pc_velodyne_W = pc_velodyne_W[mask]
+                pc_velodyne = pc_velodyne[mask]
+                pc_model_W = pc_model_W[mask]
+                pc_model = pc_model[mask]
+                img = img[mask]
+                depth_vel = depth_vel[mask]
+                modelPoints = modelPoints[mask]
+                modelPointsGT = modelPointsGT[mask]
+                rt = rt[mask]
+                idx = idx[mask]
             
             if self.modalities == 0:
                 RGBEnable = float(1)

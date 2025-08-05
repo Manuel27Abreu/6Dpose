@@ -1606,7 +1606,7 @@ class PoseNetMultiCUSTOMPointsX_old(nn.Module):
         velodyne = velodyne.transpose(2, 1).contiguous()
 
         ap_x = self.net1(x).contiguous()
-        print("net1: ", ap_x.shape)
+        # print("net1: ", ap_x.shape)
 
         bs, di, _ = ap_x.size()
 
@@ -1616,7 +1616,7 @@ class PoseNetMultiCUSTOMPointsX_old(nn.Module):
         # print("PC vector Adapt: ", ap_x.shape)
 
         ap_x2 = self.net3(velodyne).contiguous()
-        print("net3: ", ap_x2.shape)
+        # print("net3: ", ap_x2.shape)
 
         ap_x2 = ap_x2.view(di, bs, 512)
         ap_x2 = F.adaptive_avg_pool2d(ap_x2, (15,512))
@@ -1626,7 +1626,7 @@ class PoseNetMultiCUSTOMPointsX_old(nn.Module):
         ap_x = ap_x + ap_x2
 
         ap_y = self.net2(emb).contiguous()
-        print("net2", ap_y.shape)
+        # print("net2", ap_y.shape)
         
         ap_x, ap_y = self.attn(F.dropout(ap_x, p=0.0025),F.dropout(ap_y, p=0.0025))
 
