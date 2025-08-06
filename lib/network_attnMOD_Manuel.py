@@ -1648,15 +1648,18 @@ class PoseNetMultiCUSTOMPointsX_old(nn.Module):
         # print(rx)
         # print("tx.shape", tx.shape)
 
-        batch_indices = torch.arange(rx.size(0)).cuda()
+        if self.num_obj != 1:
+            batch_indices = torch.arange(rx.size(0)).cuda()
 
-        rx = rx[batch_indices, obj]
-        tx = tx[batch_indices, obj]
+            rx = rx[batch_indices, obj]
+            tx = tx[batch_indices, obj]
+        else:
+            rx = rx.squeeze(1)
+            tx = tx.squeeze(1)
 
         # print("rx.shape", rx.shape)
         # print(rx)
 
-        # print("rx.shape", rx.shape)
         # print("tx.shape", tx.shape)
 
         # print("Dentro rede ------------------")

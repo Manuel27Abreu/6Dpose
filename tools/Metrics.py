@@ -213,26 +213,176 @@ class Metrics:
         ]
 
         return avg_loss, [loss_cls0, loss_cls1, loss_cls2, loss_cls3, loss_cls4, loss_cls5, loss_cls6], avg_loss_by_class_depth
+    
+    def compute_metrics_class(self):
+        self.estimator.eval()
 
+        total_loss = 0.0
+        total_batches = 0
+
+        loss_cls0, loss_cls1, loss_cls2, loss_cls3, loss_cls4, loss_cls5, loss_cls6 = 0, 0, 0, 0, 0, 0, 0
+        batch_cls0, batch_cls1, batch_cls2, batch_cls3, batch_cls4, batch_cls5, batch_cls6 = 0, 0, 0, 0, 0, 0, 0
+
+        depththresholds = [5, 10, 15, 20]
+        num_bins = len(depththresholds)
+
+        # Global loss acumulado até cada threshold
+        loss_by_depth = [0.0 for _ in range(num_bins)]
+        count_by_depth = [0 for _ in range(num_bins)]
+
+        # Loss por classe até cada threshold
+        loss_by_class_depth = [[0.0 for _ in range(num_bins)] for _ in range(7)]
+        count_by_class_depth = [[0 for _ in range(num_bins)] for _ in range(7)]
+
+        for i, data in tqdm(enumerate(self.testdataloader, 0), total=len(self.testdataloader), desc=f'', unit='batch'):
+            pc_depth_W, pc_depth, pc_velodyne_W, pc_velodyne, pc_model_W, pc_model, img, depth_vel, modelPoints, modelPointsGT, rt, idx = data
+            
+            if self.opt.class_id != None:
+                mask = idx == self.opt.class_id
+
+                if mask.sum() == 0:
+                    continue
+
+                pc_depth_W = pc_depth_W[mask]
+                pc_depth = pc_depth[mask]
+                pc_velodyne_W = pc_velodyne_W[mask]
+                pc_velodyne = pc_velodyne[mask]
+                pc_model_W = pc_model_W[mask]
+                pc_model = pc_model[mask]
+                img = img[mask]
+                depth_vel = depth_vel[mask]
+                modelPoints = modelPoints[mask]
+                modelPointsGT = modelPointsGT[mask]
+                rt = rt[mask]
+                idx = idx[mask]
+
+            if self.modalities == 0:
+                RGBEnable = float(1)
+                Depth1Enable = float(1)
+                Depth2Enable = float(1)
+                PC1Enable = float(1)
+                PC2Enable = float(1)
+            elif self.modalities == 1:
+                RGBEnable = float(1)
+                Depth1Enable = float(0)
+                Depth2Enable = float(0)
+                PC1Enable = float(0)
+                PC2Enable = float(0)
+            elif self.modalities == 2:
+                RGBEnable = float(1)
+                Depth1Enable = float(1)
+                Depth2Enable = float(0)
+                PC1Enable = float(0)
+                PC2Enable = float(0)
+            elif self.modalities == 3:
+                RGBEnable = float(1)
+                Depth1Enable = float(1)
+                Depth2Enable = float(0)
+                PC1Enable = float(1)
+                PC2Enable = float(0)
+            
+            points = Variable(pc_depth).cuda()  # cam
+            target = Variable(pc_depth_W).cuda()
+            velodyne = Variable(pc_velodyne).cuda()
+            velodyne_gt = Variable(pc_velodyne_W).cuda()
+            model = Variable(pc_model).cuda()
+            model_gt = Variable(pc_model_W).cuda()
+
+            img = Variable(img).cuda()
+            depth_vel = Variable(depth_vel).cuda()
+            depth_vel = depth_vel.permute(0, 3, 1, 2).contiguous()
+
+            choose = torch.LongTensor([0])
+            choose = Variable(choose).cuda()        
+            idx = Variable(idx).cuda()
+            
+            modelPoints = Variable(modelPoints).cuda()
+            modelPointsGT = Variable(modelPointsGT).cuda()
+
+            img[:,0:3,:,:] = img[:,0:3,:,:] * RGBEnable
+            img[:,3,:,:] = img[:,3,:,:] * Depth1Enable
+
+            with torch.no_grad():
+                if self.option == 1:
+                    pred_r, pred_t, pred_c, _ = self.estimator(img, depth_vel*Depth2Enable, model_gt*PC1Enable, velodyne_gt*PC2Enable, choose, idx)
+                elif self.option == 2:
+                    pred_r, pred_t, pred_c, _ = self.estimator(img, depth_vel*Depth2Enable, target*PC1Enable, velodyne_gt*PC2Enable, choose, idx)
+                elif self.option == 3:
+                    pred_r, pred_t, pred_c, _ = self.estimator(img, depth_vel*Depth2Enable, model_gt*PC1Enable, target*PC2Enable, choose, idx)
+                elif self.option == 4:
+                    pred_r, pred_t, pred_c, _ = self.estimator(img, depth_vel*Depth2Enable, model_gt*PC1Enable, target*PC2Enable, choose, idx)
+                elif self.option == 5:
+                    pred_r, pred_t, pred_c, _ = self.estimator(img, depth_vel*Depth2Enable, model_gt*PC1Enable, velodyne_gt*PC2Enable, choose, idx)
+                elif self.option == 6:
+                    pred_r, pred_t, pred_c, _ = self.estimator(img, depth_vel*Depth2Enable, target*PC1Enable, model_gt*PC2Enable, choose, idx) 
+                elif self.option == 7:
+                    pred_r, pred_t, pred_c, _ = self.estimator(img, depth_vel*Depth2Enable, velodyne_gt*PC1Enable, target*PC2Enable, choose, idx)
+                elif self.option == 8:
+                    pred_r, pred_t, pred_c, _ = self.estimator(img, depth_vel*Depth2Enable, velodyne_gt*PC1Enable, model_gt*PC2Enable, choose, idx)
+
+            loss, dis, new_points, new_target = self.criterion(pred_r, pred_t, pred_c, modelPointsGT, modelPoints, idx, points, self.opt.w, self.opt.refine_start)
+
+            batch_size = pred_r.size(0)
+            total_loss += dis.sum().item()
+            total_batches += batch_size
+
+            for b in range(batch_size):
+                dis_b = dis[b].item()
+                
+                # Processamento de rt
+                t = rt[b, 0:3, 3].cpu().numpy()
+                distancia = np.linalg.norm(t)
+
+                for i, th in enumerate(depththresholds):
+                    if distancia < th:
+                        loss_by_depth[i] += dis_b
+                        count_by_depth[i] += 1
+
+        avg_loss = total_loss / total_batches
+
+        avg_loss_by_depth = []
+        for i in range(len(depththresholds)):
+            if count_by_depth[i] > 0:
+                avg = loss_by_depth[i] / count_by_depth[i]
+            else:
+                avg = float('nan')
+            avg_loss_by_depth.append(avg)
+
+        return avg_loss, avg_loss_by_depth
+        
     def main(self):
         msg = f"Metricas da pasta {self.opt.outf}\n"
 
-        depththresholds = [5, 10, 15, 20]
-        loss, loss_cls, loss_cls_depth = self.compute_metrics()
-
         classes = ["Bidons", "Caixa", "Caixa encaxe", "Extintor", "Empilhadora", "Pessoas", "Toolboxes"]
 
-        msg += f"Average loss over dataset: {loss:.4f}\n"
-        msg += "Loss por classe:\n"
-        msg += f"Bidons: {loss_cls[0]:.4f}\t Caixa: {loss_cls[1]:.4f}\t Caixa encaxe: {loss_cls[2]:.4f}\t Extintor: {loss_cls[3]:.4f}\t Empilhadora: {loss_cls[4]:.4f}\t Pessoas: {loss_cls[5]:.4f} \t Toolboxes: {loss_cls[6]:.4f}\n\n"
+        depththresholds = [5, 10, 15, 20]
+        if self.opt.num_objects != 1:
+            loss, loss_cls, loss_cls_depth = self.compute_metrics()
 
-        msg += "\nLoss por classe e thresholds de profundidade:\n"
-        for i, th in enumerate(depththresholds):
-            msg += f"[0-{th}m]:\t"
-            for cls_idx, cls_name in enumerate(classes):
-                msg += f"{cls_name}: {loss_cls_depth[cls_idx][i]:.6f}\t"
-            msg += "\n"
+            msg += f"Average loss over dataset: {loss:.4f}\n"
+            msg += "Loss por classe:\n"
+            msg += f"Bidons: {loss_cls[0]:.4f}\t Caixa: {loss_cls[1]:.4f}\t Caixa encaxe: {loss_cls[2]:.4f}\t Extintor: {loss_cls[3]:.4f}\t Empilhadora: {loss_cls[4]:.4f}\t Pessoas: {loss_cls[5]:.4f} \t Toolboxes: {loss_cls[6]:.4f}\n\n"
 
-        print(msg)
+            msg += "\nLoss por classe e thresholds de profundidade:\n"
+            for i, th in enumerate(depththresholds):
+                msg += f"[0-{th}m]:\t"
+                for cls_idx, cls_name in enumerate(classes):
+                    msg += f"{cls_name}: {loss_cls_depth[cls_idx][i]:.6f}\t"
+                msg += "\n"
 
-        self.discord.post(content=msg)
+            print(msg)
+
+            self.discord.post(content=msg)
+        else:
+            loss, loss_depth = self.compute_metrics_class()
+
+            msg += f"Average loss over dataset ({classes[self.opt.class_id]}): {loss:.4f}\n"
+            msg += "\nLoss por thresholds de profundidade:\n"
+            for i, th in enumerate(depththresholds):
+                msg += f"[0-{th}m]:\t"
+                msg += f"{loss_depth[i]:.6f}\t"
+                msg += "\n"
+            
+            print(msg)
+
+            self.discord.post(content=msg)    

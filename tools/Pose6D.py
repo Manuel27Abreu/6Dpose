@@ -470,7 +470,7 @@ if __name__ == '__main__':
     print("Out folder", opt.outf)
     print()
     
-    opt.num_objects = 7
+    opt.num_objects = 1
     opt.num_points = 1000
     opt.outfpre = 'trained_models/PoseIndustrial6DMultiRGBOnlyRandomized' + modelString
 
