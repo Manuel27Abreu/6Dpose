@@ -7,39 +7,16 @@
 import os
 import sys
 sys.path.insert(0, os.getcwd())
-import argparse
-import os
-import random
 import time
 import math
 from datetime import datetime
 import numpy as np
 import torch
-import torch.nn as nn
-import torch.nn.parallel
-import torch.backends.cudnn as cudnn
 import torch.optim as optim
-import torch.utils.data
-import torchvision.datasets as dset
-import torchvision.transforms as transforms
-import torchvision.utils as vutils
 from torch.autograd import Variable
-# from datasets.PoseIndustrial6D.dataloader_6DPMultiResize3_JPz_trim import PoseDataset2 as PoseDataset_pallets
-from datasets.PoseIndustrial6D.dataloader_20m import PoseDataset2 as PoseDataset
-
-from lib.network_attnMOD_Manuel import PoseNetMultiCUSTOMPointsX,PoseNetMultiCUSTOM
-
-from lib.lossMOD_Manuel import Lossv2
-from lib.utils import setup_logger
-
-import matplotlib as mpl
 import matplotlib.pyplot as plt
-from discordwebhook import Discord
-import torch.nn.functional as F
-from scipy.spatial.transform import Rotation as R
-from tqdm import tqdm
 
-from torchvision import datasets, models, transforms
+from tqdm import tqdm
 
 class Train:
     def __init__(self, optimizer, dataloader, testdataloader, estimator, criterion, opt, discord):
