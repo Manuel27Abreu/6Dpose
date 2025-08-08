@@ -448,6 +448,12 @@ if __name__ == '__main__':
         mask = "model"
         print("option8- img_velodyne-model-pc_velodyne-pc_model")
 
+    opt.num_objects = 1
+    opt.num_points = 1000
+    opt.outfpre = 'trained_models/PoseIndustrial6DMultiRGBOnlyRandomized' + modelString
+
+    opt.outf += f"/{opt.num_objects} objetos"
+
     opt.modalities = 0
     if opt.modalities == 0:
         opt.outf += '/All'
@@ -470,10 +476,6 @@ if __name__ == '__main__':
     print("Out folder", opt.outf)
     print()
     
-    opt.num_objects = 1
-    opt.num_points = 1000
-    opt.outfpre = 'trained_models/PoseIndustrial6DMultiRGBOnlyRandomized' + modelString
-
     opt.log_dir = 'experiments/PoseIndustrial6DMultiRGBOnlyRandomized' + modelString + str(opt.num_points)
     opt.repeat_epoch = 1
 

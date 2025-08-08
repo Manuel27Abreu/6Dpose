@@ -41,30 +41,9 @@ class Metrics:
 
         for i, data in tqdm(enumerate(self.testdataloader, 0), total=len(self.testdataloader), desc=f'', unit='batch'):
             pc_depth_W, pc_depth, pc_velodyne_W, pc_velodyne, pc_model_W, pc_model, img, depth_vel, modelPoints, modelPointsGT, rt, idx = data
-            
-            valid_indices = []
-            for b in range(rt.shape[0]):
-                x, y, z = rt[b][0][3], rt[b][1][3], rt[b][2][3]
-                dist = math.sqrt(x**2 + y**2 + z**2)
-                if 0.05 < dist < 20:
-                    valid_indices.append(b)
-
-            if len(valid_indices) == 0:
+            if math.sqrt(rt[0][0][3]**2 + rt[0][1][3]**2 + rt[0][2][3]**2) < 0.05:
                 continue
-
-            pc_depth = pc_depth[valid_indices]
-            pc_depth_W = pc_depth_W[valid_indices]
-            pc_velodyne = pc_velodyne[valid_indices]
-            pc_velodyne_W = pc_velodyne_W[valid_indices]
-            pc_model = pc_model[valid_indices]
-            pc_model_W = pc_model_W[valid_indices]
-            img = img[valid_indices]
-            depth_vel = depth_vel[valid_indices]
-            modelPoints = modelPoints[valid_indices]
-            modelPointsGT = modelPointsGT[valid_indices]
-            rt = rt[valid_indices]
-            idx = idx[valid_indices]
-
+            
             if self.modalities == 0:
                 RGBEnable = float(1)
                 Depth1Enable = float(1)
@@ -356,7 +335,25 @@ class Metrics:
         classes = ["Bidons", "Caixa", "Caixa encaxe", "Extintor", "Empilhadora", "Pessoas", "Toolboxes"]
 
         depththresholds = [5, 10, 15, 20]
-        if self.opt.num_objects != 1:
+
+        loss, loss_cls, loss_cls_depth = self.compute_metrics()
+
+        msg += f"Average loss over dataset: {loss:.4f}\n"
+        msg += "Loss por classe:\n"
+        msg += f"Bidons: {loss_cls[0]:.4f}\t Caixa: {loss_cls[1]:.4f}\t Caixa encaxe: {loss_cls[2]:.4f}\t Extintor: {loss_cls[3]:.4f}\t Empilhadora: {loss_cls[4]:.4f}\t Pessoas: {loss_cls[5]:.4f} \t Toolboxes: {loss_cls[6]:.4f}\n\n"
+
+        msg += "\nLoss por classe e thresholds de profundidade:\n"
+        for i, th in enumerate(depththresholds):
+            msg += f"[0-{th}m]:\t"
+            for cls_idx, cls_name in enumerate(classes):
+                msg += f"{cls_name}: {loss_cls_depth[cls_idx][i]:.6f}\t"
+            msg += "\n"
+
+        print(msg)
+
+        self.discord.post(content=msg)
+
+        """if self.opt.num_objects != 1:
             loss, loss_cls, loss_cls_depth = self.compute_metrics()
 
             msg += f"Average loss over dataset: {loss:.4f}\n"
@@ -385,4 +382,4 @@ class Metrics:
             
             print(msg)
 
-            self.discord.post(content=msg)    
+            self.discord.post(content=msg)    """
