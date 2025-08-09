@@ -13,3 +13,12 @@ Pose6D.py
 
     --annotate
         utiliza o modelo para fazer anotações
+
+    --class_id
+        quando quero treinar para uma classe especifica
+
+    --option
+        opção a utilizar
+
+    --modalitie
+        quais modalidades estão ativas

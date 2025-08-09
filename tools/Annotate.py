@@ -116,8 +116,7 @@ class Annotate:
 
                 x, y, z = T[0][3], T[1][3], T[2][3]
                 dist = math.sqrt(x**2 + y**2 + z**2)
-                # print("distancia pred", dist, "velodyne", dist_centroide)
-                if dist < 20 and dist_centroide < 20:
+                if dist_centroide < 20:
                     # guardar no ficheiro
                     with open(file_name[i], 'w') as f:
                         for row in T:

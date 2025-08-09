@@ -448,7 +448,7 @@ if __name__ == '__main__':
         mask = "model"
         print("option8- img_velodyne-model-pc_velodyne-pc_model")
 
-    opt.num_objects = 1
+    opt.num_objects = 7
     opt.num_points = 1000
     opt.outfpre = 'trained_models/PoseIndustrial6DMultiRGBOnlyRandomized' + modelString
 

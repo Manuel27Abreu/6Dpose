@@ -93,7 +93,7 @@ class PoseDataset2(data.Dataset):
                     M = vals.reshape(4, 4)
                     t = M[:3, 3]
                     dist = np.linalg.norm(t)
-                    if dist > 20.0:
+                    if dist > 20.0 or dist <= 0.5:
                         continue
 
                     self.list_pc_depth.append(f"{f_path}/PC_DEPTH_{str_det}.ply")
