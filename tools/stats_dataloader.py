@@ -70,10 +70,16 @@ summary_ax.axis('off')  # Oculta o eixo
 summary_lines = [r"$\bf{Total\ Annotations\ per\ Class}$"]
 
 # Adiciona as linhas com contagens
+total_annotations = 0
 for i, name in enumerate(class_names):
     cls_id = str(i)
     count = len(distance_by_class.get(cls_id, []))
+    total_annotations += count
     summary_lines.append(f"{name}: {count}")
+
+# Adiciona linha com o total geral
+summary_lines.append("")
+summary_lines.append(rf"$\bf{{Total\ Annotations:}}$ {total_annotations}")
 
 # Junta as linhas com espaçamento normal
 summary_text = "\n".join(summary_lines)
