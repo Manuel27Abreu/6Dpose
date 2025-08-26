@@ -29,8 +29,8 @@ class PoseDataset2(data.Dataset):
         self.concatmethod = concatmethod
         self.maskedmethod = maskedmethod
 
-        self.path_depth = "../Anot model/results"
-        self.path_rgb = "../Anot model/results"
+        self.path_depth = "../Anot model/results modelo"
+        self.path_rgb = "../Anot model/results modelo"
 
         all_folders = [d for d in os.listdir(self.path_depth) if os.path.isdir(os.path.join(self.path_depth, d))]
         all_folders.sort()
