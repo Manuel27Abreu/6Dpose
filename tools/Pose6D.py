@@ -25,6 +25,7 @@ import torchvision.utils as vutils
 from torch.autograd import Variable
 
 from datasets.PoseIndustrial6D.dataloader_20m import PoseDataset2 as PoseDataset
+from datasets.PoseIndustrial6D.dataloader_folderAnot import PoseDataset2 as PoseDatasetSmall
 from datasets.PoseIndustrial6D.dataloader_annotate import PoseDataset2 as AnotDataset
 
 from tools.Train import Train
@@ -394,6 +395,7 @@ parser.add_argument('--train', action='store_true', help='training mode')
 parser.add_argument('--run', action='store_true', help='run mode')
 parser.add_argument('--metrics', action='store_true', help='metrics mode')
 parser.add_argument('--annotate', action='store_true', help='annotate mode')
+parser.add_argument('--data', type=str, default = '', help='tipo de dataset (model ou full)')
 parser.add_argument('--class_id', type=int, default = None, help='treinar apenas para a classe especifica')
 opt = parser.parse_args()
 
@@ -504,10 +506,14 @@ if __name__ == '__main__':
     opt.decay_start = False
     optimizer = optim.Adam(estimator.parameters(), lr=opt.lr, weight_decay=0.00001)
 
-    dataset = PoseDataset('all', opt.num_points, concatmethod=concat, maskedmethod=mask)
-    dataloader = torch.utils.data.DataLoader(dataset, batch_size=opt.batch_size, shuffle=True, num_workers=opt.workers)
+    if opt.data == "model":
+        dataset = PoseDatasetSmall('all', opt.num_points, concatmethod=concat, maskedmethod=mask)
+        test_dataset = PoseDatasetSmall('all', opt.num_points, concatmethod=concat, maskedmethod=mask)
+    else:
+        dataset = PoseDataset('all', opt.num_points, concatmethod=concat, maskedmethod=mask)
+        test_dataset = PoseDataset('all', opt.num_points, concatmethod=concat, maskedmethod=mask)
 
-    test_dataset = PoseDataset('all', opt.num_points, concatmethod=concat, maskedmethod=mask)
+    dataloader = torch.utils.data.DataLoader(dataset, batch_size=opt.batch_size, shuffle=True, num_workers=opt.workers)
     testdataloader = torch.utils.data.DataLoader(test_dataset, batch_size=int(opt.batch_size/2), shuffle=True, num_workers=opt.workers)
 
     anotdataloader = AnotDataset('all', opt.num_points, concatmethod=concat, maskedmethod=mask)

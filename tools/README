@@ -5,6 +5,9 @@ Pose6D.py
     --train 
         vai treinar
 
+    --data
+        escolhe qual o dataset a utilizar (model ou full)
+
     --run
         mostra o resultado obtido da predição da rede
 
@@ -22,3 +25,5 @@ Pose6D.py
 
     --modalitie
         quais modalidades estão ativas
+
+python tools/Pose6D.py --train --option 8 --dataset model/full
