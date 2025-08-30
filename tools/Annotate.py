@@ -23,6 +23,7 @@ import torchvision.datasets as dset
 import torchvision.transforms as transforms
 import torchvision.utils as vutils
 from torch.autograd import Variable
+from scipy.spatial import KDTree
 
 import matplotlib.pyplot as plt
 from tqdm import tqdm
@@ -37,6 +38,8 @@ class Annotate:
 
     def annotate(self):
         self.estimator.eval()
+        bad_anot = "../Anot model/results modelo/mas anotações.txt"
+        open(bad_anot, "w").close()
 
         for i, data in tqdm(enumerate(self.dataloader, 0), total=len(self.dataloader), desc=f'', unit='batch'):
             pc_depth_W, pc_depth, pc_velodyne_W, pc_velodyne, pc_model_W, pc_model, img, depth_vel, modelPoints, modelPointsGT, rt, idx, file_name = data
@@ -105,7 +108,6 @@ class Annotate:
                 elif self.option == 8:
                     pred_r, pred_t, pred_c, _ = self.estimator(img, depth_vel*Depth2Enable, velodyne_gt*PC1Enable, model_gt*PC2Enable, choose, idx)
 
-
             predictions = []
             for i in range(rt.shape[0]):
                 centroide = velodyne_gt[i].mean(dim=0)
@@ -122,6 +124,20 @@ class Annotate:
                         for row in T:
                             formatted_row = ' '.join(f"{val:.5f}" for val in row)
                             f.write(formatted_row + " ; ") 
+
+                    diff = abs(dist_centroide - dist)
+
+                    pc = velodyne_gt[i].cpu().numpy()
+                    p = np.array([x, y, z])
+                    tree = KDTree(pc)
+                    dist_nn, _ = tree.query(p)
+
+                    dentro = dist_nn < 0.5
+
+                    if not dentro:
+                        with open(bad_anot, "a") as f:
+                            f.write(f"{file_name[i]}\n")
+
                 else:
                     # tqdm.write(f"Matriz identidade")
                     # escrever matriz identidade
@@ -135,6 +151,8 @@ class Annotate:
                         for row in identity:
                             formatted_row = ' '.join(f"{val:.5f}" for val in row)
                             f.write(formatted_row + " ; ")
+
+                
 
     def computeT(self, pred_r, pred_t):
         bs = 1

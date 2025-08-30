@@ -8,13 +8,14 @@ from torch.utils.data import DataLoader
 import numpy as np
 import matplotlib.pyplot as plt
 from datasets.PoseIndustrial6D.dataloader_20m import PoseDataset2
+from tqdm import tqdm
 
 distance_by_class = defaultdict(list)
 
 dataset = PoseDataset2(mode="all")
 loader = DataLoader(dataset, batch_size=1, shuffle=False)
 
-for data in loader:
+for data in tqdm(loader):
     # unpack data
     _, _, _, _, _, _, _, _, _, _, rt, idx = data
 
