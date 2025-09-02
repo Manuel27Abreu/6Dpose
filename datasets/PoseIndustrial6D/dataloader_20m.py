@@ -22,6 +22,7 @@ import matplotlib.pyplot as plt
 import numpy.ma as ma
 import open3d as o3d
 import open3d.visualization as vis
+from tqdm import tqdm
 
  
 class PoseDataset2(data.Dataset):
@@ -76,7 +77,7 @@ class PoseDataset2(data.Dataset):
         self.list_depthM = []
         self.list_T = []
 
-        for folder in selected_folders:
+        for folder in tqdm(selected_folders, desc="Dataloader"):
             f_path = os.path.join(self.path_depth, folder)
             for file in os.scandir(f_path):
                 if 'RGB' in file.name:
@@ -90,10 +91,17 @@ class PoseDataset2(data.Dataset):
 
                     vals = np.fromstring(open(f"{f_path}/{detX}.txt", 'r').read().replace(';',' '), sep=' ')
 
+                    # verificacao de distancia
                     M = vals.reshape(4, 4)
                     t = M[:3, 3]
                     dist = np.linalg.norm(t)
                     if dist > 20.0 or dist <= 0.5:
+                        continue
+
+                    # verificacao pontos
+                    pcd = o3d.io.read_point_cloud(f"{f_path}/PC_VELODYNE_{str_det}.ply")
+                    num_pontos = len(pcd.points)
+                    if num_pontos <= 100:
                         continue
 
                     self.list_pc_depth.append(f"{f_path}/PC_DEPTH_{str_det}.ply")

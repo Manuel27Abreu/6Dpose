@@ -83,6 +83,12 @@ class PoseDataset2(data.Dataset):
                     str_seg = fpls[1] + '_' + fpls[2] + '_seg' + d2[0]
                     detX = 'det' + d2[0]
 
+                    # verificacao pontos
+                    pcd = o3d.io.read_point_cloud(f"{f_path}/PC_VELODYNE_{str_det}.ply")
+                    num_pontos = len(pcd.points)
+                    if num_pontos <= 100:
+                        continue
+
                     self.list_pc_depth.append(f"{f_path}/PC_DEPTH_{str_det}.ply")
                     self.list_pc_velod.append(f"{f_path}/PC_VELODYNE_{str_det}.ply")
                     self.list_pc_model.append(f"{f_path}/PC_MODEL_{str_det}.ply")
