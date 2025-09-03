@@ -510,8 +510,8 @@ if __name__ == '__main__':
         dataset = PoseDatasetSmall('all', opt.num_points, concatmethod=concat, maskedmethod=mask)
         test_dataset = PoseDatasetSmall('all', opt.num_points, concatmethod=concat, maskedmethod=mask)
     else:
-        dataset = PoseDataset('all', opt.num_points, concatmethod=concat, maskedmethod=mask)
-        test_dataset = PoseDataset('all', opt.num_points, concatmethod=concat, maskedmethod=mask)
+        dataset = PoseDataset('train', opt.num_points, concatmethod=concat, maskedmethod=mask)
+        test_dataset = PoseDataset('test', opt.num_points, concatmethod=concat, maskedmethod=mask)
 
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=opt.batch_size, shuffle=True, num_workers=opt.workers)
     testdataloader = torch.utils.data.DataLoader(test_dataset, batch_size=int(opt.batch_size/2), shuffle=True, num_workers=opt.workers)
