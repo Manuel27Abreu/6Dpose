@@ -39,23 +39,6 @@ class PoseDataset2(data.Dataset):
         all_folders = [d for d in os.listdir(self.path_depth) if os.path.isdir(os.path.join(self.path_depth, d))]
         all_folders.sort()
 
-        total_images = len(all_folders)
-        indices = list(range(total_images))
-
-        # split points
-        train_split = int(0.8 * total_images)
-
-        random.Random(666).shuffle(indices)
-
-        if mode == 'train':
-            selected_folders = [all_folders[i] for i in indices[:train_split]]
-        elif mode == 'test':
-            selected_folders = [all_folders[i] for i in indices[train_split:]]
-        elif mode == 'all':
-            selected_folders = all_folders
-        elif mode == '16':
-            selected_folders = [all_folders[i] for i in indices[:train_split][:16]]
-
         self.num_pt_mesh_large = num_pt
         self.num_pt_mesh_small = num_pt
         self.num_points = num_pt
@@ -77,7 +60,7 @@ class PoseDataset2(data.Dataset):
         self.list_depthM = []
         self.list_T = []
 
-        for folder in tqdm(selected_folders, desc="Dataloader"):
+        for folder in tqdm(all_folders, desc="Dataloader"):
             f_path = os.path.join(self.path_depth, folder)
             for file in os.scandir(f_path):
                 if 'RGB' in file.name:
@@ -115,6 +98,29 @@ class PoseDataset2(data.Dataset):
                     self.list_depthM.append(f"{f_path}/MODEL_{str_det}.png")
 
                     self.list_label.append(f"{f_path}/{detX}.txt")
+
+        total_examples = len(self.list_rgb)
+        indices = list(range(total_examples))
+        random.Random(666).shuffle(indices)
+
+        train_split = int(0.8 * total_examples)
+
+        if mode == 'train':
+            selected_indices = indices[:train_split]
+        elif mode == 'test':
+            selected_indices = indices[train_split:]
+        elif mode == 'all':
+            selected_indices = indices
+
+        self.list_rgb      = [self.list_rgb[i] for i in selected_indices]
+        self.list_mask     = [self.list_mask[i] for i in selected_indices]
+        self.list_depth    = [self.list_depth[i] for i in selected_indices]
+        self.list_depthV   = [self.list_depthV[i] for i in selected_indices]
+        self.list_depthM   = [self.list_depthM[i] for i in selected_indices]
+        self.list_pc_depth = [self.list_pc_depth[i] for i in selected_indices]
+        self.list_pc_velod = [self.list_pc_velod[i] for i in selected_indices]
+        self.list_pc_model = [self.list_pc_model[i] for i in selected_indices]
+        self.list_label    = [self.list_label[i] for i in selected_indices]
 
         self.length = len(self.list_rgb)
 
