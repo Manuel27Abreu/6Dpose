@@ -338,8 +338,15 @@ def show(pc_depth_W, pc_depth, pc_velodyne_W, pc_velodyne, pc_model_W, pc_model,
         ax.plot(x1, y1, z1, color='blue', linewidth=1)
         ax.plot(x_pred, y_pred, z_pred, color='orange', linewidth=1)
 
-    ax.set_title('PointClouds + Eixos')
-    ax.legend(loc='upper left')
+    # Adicionar texto no final dos eixos
+    ax.text(x1[1], y1[1], z1[1], "World", color='blue', fontsize=7)
+    ax.text(x_pred[1], y_pred[1], z_pred[1], "Origin", color='orange', fontsize=7)
+
+    # ax.set_axis_off()
+    ax.grid(False)
+
+    # fig.patch.set_facecolor('white')  # fundo da figura
+    # ax.set_facecolor('white')
 
     plt.show()
 
@@ -349,10 +356,9 @@ if __name__ == "__main__":
     mask = "depth"
 
     dataset = PoseDataset2('all', 1000, concatmethod=concat, maskedmethod=mask)
-    dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=True, num_workers=10)
+    dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False, num_workers=10)
     
-    data = dataset[1]
+    for data in tqdm(dataset):
+        pc_depth_W, pc_depth, pc_velodyne_W, pc_velodyne, pc_model_W, pc_model, img, depth_vel, modelPoints, modelPoints_W, rt, idx = data
 
-    pc_depth_W, pc_depth, pc_velodyne_W, pc_velodyne, pc_model_W, pc_model, img, depth_vel, modelPoints, modelPoints_W, rt, idx = data
-
-    show(pc_depth_W, pc_depth, pc_velodyne_W, pc_velodyne, pc_model_W, pc_model, img, depth_vel, modelPoints, modelPoints_W, rt, idx)
+        show(pc_depth_W, pc_depth, pc_velodyne_W, pc_velodyne, pc_model_W, pc_model, img, depth_vel, modelPoints, modelPoints_W, rt, idx)

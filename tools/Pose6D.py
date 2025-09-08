@@ -456,7 +456,7 @@ if __name__ == '__main__':
 
     opt.outf += f"/{opt.num_objects} objetos"
 
-    opt.modalities = 0
+    # opt.modalities = 0
     if opt.modalities == 0:
         opt.outf += '/All'
         print("Todas as modalidades ativas")
@@ -469,6 +469,9 @@ if __name__ == '__main__':
     elif opt.modalities == 3:
         opt.outf += '/RGB-Depth1-PC1'
         print("RGB, Depth1 e PC1")
+    elif opt.modalities == 4:
+        opt.outf += '/RGB-Depth2-PC2'
+        print("RGB, Depth2 e PC2")
     print()
 
     if opt.class_id != None:
@@ -512,6 +515,9 @@ if __name__ == '__main__':
     else:
         dataset = PoseDataset('train', opt.num_points, concatmethod=concat, maskedmethod=mask)
         test_dataset = PoseDataset('test', opt.num_points, concatmethod=concat, maskedmethod=mask)
+
+        print(len(dataset))
+        print(len(test_dataset))
 
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=opt.batch_size, shuffle=True, num_workers=opt.workers)
     testdataloader = torch.utils.data.DataLoader(test_dataset, batch_size=int(opt.batch_size/2), shuffle=True, num_workers=opt.workers)

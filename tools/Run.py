@@ -52,6 +52,12 @@ class Run:
                 Depth2Enable = float(0)
                 PC1Enable = float(1)
                 PC2Enable = float(0)
+            elif self.modalities == 4:
+                RGBEnable = float(1)
+                Depth1Enable = float(0)
+                Depth2Enable = float(1)
+                PC1Enable = float(0)
+                PC2Enable = float(1)
 
             points = Variable(pc_depth).cuda()  # cam
             target = Variable(pc_depth_W).cuda()
