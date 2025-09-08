@@ -390,6 +390,7 @@ parser.add_argument('--resume_posenet', type=str, default = '',  help='resume Po
 parser.add_argument('--start_epoch', type=int, default = 1, help='which epoch to start')
 parser.add_argument('--option', type=int,  required=True, help='opção a executar')
 parser.add_argument('--modalities', type=int, default = 0, help='modalidades a executar')
+parser.add_argument('--model', type=str, default='', help='Backbone')
 
 parser.add_argument('--train', action='store_true', help='training mode')
 parser.add_argument('--run', action='store_true', help='run mode')
@@ -407,7 +408,7 @@ if __name__ == '__main__':
     torch.manual_seed(opt.manualSeed)
     torch.cuda.set_device(0)
 
-    modelString = "MobileNetV2"
+    modelString = opt.model
 
     if opt.option == 1:
         opt.outf = f'trained_models/{modelString}/1-img_model-velodyne-pc_model-pc_velodyne'

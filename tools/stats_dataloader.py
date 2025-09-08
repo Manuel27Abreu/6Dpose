@@ -12,7 +12,7 @@ from tqdm import tqdm
 
 distance_by_class = defaultdict(list)
 
-dataset = PoseDataset2(mode="all")
+dataset = PoseDataset2(mode="test")
 loader = DataLoader(dataset, batch_size=1, shuffle=False)
 
 for data in tqdm(loader):
