@@ -54,7 +54,6 @@ class Train:
                 rt = rt[mask]
                 idx = idx[mask]
 
-
             if self.modalities == 0:
                 RGBEnable = float(1)
                 Depth1Enable = float(1)
@@ -85,6 +84,12 @@ class Train:
                 Depth2Enable = float(1)
                 PC1Enable = float(0)
                 PC2Enable = float(1)
+            elif self.modalities == 5:
+                RGBEnable = float(1)
+                Depth1Enable = float(1)
+                Depth2Enable = float(1)
+                PC1Enable = float(0)
+                PC2Enable = float(0)
 
             points = Variable(pc_depth).cuda()  # cam
             target = Variable(pc_depth_W).cuda()
@@ -194,6 +199,12 @@ class Train:
                 Depth2Enable = float(1)
                 PC1Enable = float(0)
                 PC2Enable = float(1)
+            elif self.modalities == 5:
+                RGBEnable = float(1)
+                Depth1Enable = float(1)
+                Depth2Enable = float(1)
+                PC1Enable = float(0)
+                PC2Enable = float(0)
 
             points = Variable(pc_depth).cuda()  # cam
             target = Variable(pc_depth_W).cuda()

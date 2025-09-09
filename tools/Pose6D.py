@@ -473,6 +473,9 @@ if __name__ == '__main__':
     elif opt.modalities == 4:
         opt.outf += '/RGB-Depth2-PC2'
         print("RGB, Depth2 e PC2")
+    elif opt.modalities == 5:
+        opt.outf += '/RGB-Depth1-Depth2'
+        print("RGB, Depth1 e Depth2")
     print()
 
     if opt.class_id != None:
