@@ -568,14 +568,19 @@ class Metrics:
         msg += "Loss por classe:\n"
         msg += f"Bidons: {loss_cls[0]:.4f}\t Caixa: {loss_cls[1]:.4f}\t Caixa encaxe: {loss_cls[2]:.4f}\t Extintor: {loss_cls[3]:.4f}\t Empilhadora: {loss_cls[4]:.4f}\t Pessoas: {loss_cls[5]:.4f} \t Toolboxes: {loss_cls[6]:.4f}\n\n"
 
+        msg_latex = f"Metricas da pasta {self.opt.outf}\n"
+        msg_latex += f"{loss_cls[0]:.4f} & {loss_cls[1]:.4f} & {loss_cls[2]:.4f} & {loss_cls[3]:.4f} & {loss_cls[4]:.4f} & {loss_cls[5]:.4f} & {loss_cls[6]:.4f}\n\n"
+
         msg += "\nLoss por classe e thresholds de profundidade:\n"
         for i, th in enumerate(depththresholds):
             msg += f"[0-{th}m]:\t"
             for cls_idx, cls_name in enumerate(classes):
                 msg += f"{cls_name}: {loss_cls_depth[cls_idx][i]:.4f}\t"
+                msg_latex += f"{loss_cls_depth[cls_idx][i]:.4f} & "
             msg += "\n"
+            msg_latex += f"\n"
 
-        print(msg)
+        print(msg_latex)
 
         self.discord.post(content=msg)
 
