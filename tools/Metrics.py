@@ -602,7 +602,6 @@ class Metrics:
             plt.plot(
                 error_thresholds, 
                 acc_curve, 
-                marker='.', 
                 linestyle='--', 
                 color=colors[cls], 
                 label=class_labels[cls]
@@ -610,12 +609,10 @@ class Metrics:
 
         plt.xlabel("Error threshold (m)")
         plt.ylabel("Accuracy")
-        # plt.title("Accuracy vs Threshold por classe")
-        plt.xlim(0, 0.8)        
+        plt.xlim(0, 0.8)
+        plt.ylim(0, 1)
         plt.legend()
         plt.xticks(error_thresholds)
-        ymin, ymax = plt.ylim()
-        plt.yticks(np.linspace(ymin, ymax, 5))
 
         plt.tight_layout()
         plt.savefig("imgs/accuracy_vs_threshold.png", dpi=300)
