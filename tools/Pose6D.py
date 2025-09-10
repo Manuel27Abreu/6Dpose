@@ -391,7 +391,7 @@ parser.add_argument('--start_epoch', type=int, default = 1, help='which epoch to
 parser.add_argument('--option', type=int,  required=True, help='opção a executar')
 parser.add_argument('--modalities', type=int, default = 0, help='modalidades a executar')
 parser.add_argument('--model', type=str, default='', help='Backbone')
-parser.add_argument('--noise', type=int, default=0.0025, help='noise probability')
+parser.add_argument('--noise', type=float, default=0.0025, help='noise probability')
 
 parser.add_argument('--train', action='store_true', help='training mode')
 parser.add_argument('--run', action='store_true', help='run mode')
@@ -507,6 +507,7 @@ if __name__ == '__main__':
         estimator.cnn.attention_fusion = estimatorfake.cnn.attention_fusion
         estimator.cuda()
     elif opt.resume_posenet == 'ruido':
+        print("Resume com ruido")
         estimator = PoseNetMultiCUSTOMPointsX(modelRGB, modelDepth, modelDepth2, num_points=opt.num_points, num_obj=opt.num_objects, embchannels=embchannels, noise=opt.noise)
         estimator.cuda()
 
