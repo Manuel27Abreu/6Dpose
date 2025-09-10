@@ -569,32 +569,22 @@ class Metrics:
         msg += f"Bidons: {loss_cls[0]:.4f}\t Caixa: {loss_cls[1]:.4f}\t Caixa encaxe: {loss_cls[2]:.4f}\t Extintor: {loss_cls[3]:.4f}\t Empilhadora: {loss_cls[4]:.4f}\t Pessoas: {loss_cls[5]:.4f} \t Toolboxes: {loss_cls[6]:.4f}\n\n"
 
         msg_latex = f"Metricas da pasta {self.opt.outf}\n"
-        msg_latex += f"{loss_cls[0]:.4f} & {loss_cls[1]:.4f} & {loss_cls[2]:.4f} & {loss_cls[3]:.4f} & {loss_cls[4]:.4f} & {loss_cls[5]:.4f} & {loss_cls[6]:.4f}\n\n"
 
         msg += "\nLoss por classe e thresholds de profundidade:\n"
         for i, th in enumerate(depththresholds):
             msg += f"[0-{th}m]:\t"
+            msg_latex += f"0--{th}m & "
             for cls_idx, cls_name in enumerate(classes):
                 msg += f"{cls_name}: {loss_cls_depth[cls_idx][i]:.4f}\t"
                 msg_latex += f"{loss_cls_depth[cls_idx][i]:.4f} & "
             msg += "\n"
-            msg_latex += f"\n"
+            msg_latex += f"\\ \n"
 
         print(msg_latex)
 
         self.discord.post(content=msg)
 
         error_thresholds = np.arange(0.05, 0.85, 0.05).tolist()
-
-        """plt.figure(figsize=(8,5))
-        plt.plot(error_thresholds, accuracy_by_threshold, linestyle='-', color='b', label="Accuracy")
-        plt.xlabel("Threshold (m)")
-        plt.ylabel("Accuracy")
-        plt.xlim(0, 0.8)
-        plt.ylim(0, 1.0) 
-        plt.grid(True, linestyle="--", alpha=0.6)
-        plt.tight_layout()
-        plt.show()"""
 
         plt.figure(figsize=(8,5))
         plt.plot(error_thresholds, accuracy_by_threshold, marker='o', label="Global", color="black")

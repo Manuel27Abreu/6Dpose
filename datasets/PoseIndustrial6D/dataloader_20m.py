@@ -7,7 +7,7 @@ from os import listdir, scandir
 from sys import exit
 import torch
 import re
-
+import cv2
 import numpy as np
 import torchvision.transforms as transforms
 import argparse
@@ -26,9 +26,10 @@ from tqdm import tqdm
 
  
 class PoseDataset2(data.Dataset):
-    def __init__(self, mode="all", num_pt=15000, concatmethod="depth", maskedmethod="depth"):
+    def __init__(self, mode="all", num_pt=15000, concatmethod="depth", maskedmethod="depth", ruido=False):
         self.concatmethod = concatmethod
         self.maskedmethod = maskedmethod
+        self.ruido = ruido
 
         # self.path_depth = "../Anot Perdiz/results"
         # self.path_rgb = "../Anot Perdiz/results"
@@ -43,6 +44,12 @@ class PoseDataset2(data.Dataset):
         self.num_pt_mesh_small = num_pt
         self.num_points = num_pt
         self.norm = transforms.Normalize(mean=[0.485, 0.456, 0.406,0.5], std=[0.229, 0.224, 0.225,0.5])
+
+        self.noise_pc_std = 0.05
+        self.noise_depth_std = 0.05
+        self.h_std = 0.05
+        self.s_std = 0.05
+        self.v_std = 0.05
 
         self.list_pc = []
         self.list_pc_depth = []
@@ -186,6 +193,29 @@ class PoseDataset2(data.Dataset):
 
         mask = np.expand_dims(mask, axis=-1)
 
+        if self.ruido:
+            hsv = cv2.cvtColor(img, cv2.COLOR_RGB2HSV).astype(np.float32)
+            h, s, v = cv2.split(hsv)
+
+            # Aplica ruído gaussiano em cada canal
+            h += np.random.randn(*h.shape) * (self.h_std * 180)
+            s += np.random.randn(*s.shape) * (self.s_std * 255)
+            v += np.random.randn(*v.shape) * (self.v_std * 255)
+
+            # Clipa valores para intervalos válidos
+            h = np.clip(h, 0, 179)
+            s = np.clip(s, 0, 255)
+            v = np.clip(v, 0, 255)
+
+            hsv = cv2.merge([h, s, v]).astype(np.uint8)
+            img = cv2.cvtColor(hsv, cv2.COLOR_HSV2RGB)
+
+            noise_depth = np.random.normal(loc=0.0, scale=self.noise_depth_std, size=depth_expanded.shape)
+
+            depth_expanded = depth_expanded + noise_depth
+            depth_expandedV = depth_expandedV + noise_depth
+            depth_expandedM = depth_expandedM + noise_depth
+
         img4c = np.zeros((4, img.shape[1], img.shape[2]), dtype=np.float32)
 
         if self.concatmethod == "depth":
@@ -240,6 +270,16 @@ class PoseDataset2(data.Dataset):
         # pc_depthvel_3dd = o3d.io.read_point_cloud(self.list_pc_velod[j])
         # vis.draw(geometry=pc_depth_3dd, non_blocking_and_return_uid=True, title='PC DEPTH')
         # vis.draw(geometry=pc_depthvel_3dd, non_blocking_and_return_uid=True, title='PC VEL')
+
+        if self.ruido:
+            noise_pc = np.random.normal(loc=0.0, scale=self.noise_pc_std, size=pointcloud_cam_W.shape)
+            
+            pointcloud_cam_W = pointcloud_cam_W + noise_pc
+            pointcloud_cam = pointcloud_cam + noise_pc
+            pointcloud_vel_W = pointcloud_vel_W + noise_pc
+            pointcloud_vel = pointcloud_vel + noise_pc
+            pointcloud_model_W = pointcloud_model_W + noise_pc
+            pointcloud_model = pointcloud_model + noise_pc
 
         """print(pointcloud_cam_W.shape, pointcloud_cam.shape)
         print(pointcloud_vel_W.shape, pointcloud_vel.shape)
@@ -343,19 +383,43 @@ def show(pc_depth_W, pc_depth, pc_velodyne_W, pc_velodyne, pc_model_W, pc_model,
     ax.text(x_pred[1], y_pred[1], z_pred[1], "Origin", color='orange', fontsize=7)
 
     # ax.set_axis_off()
-    ax.grid(False)
+    # ax.grid(False)
 
     # fig.patch.set_facecolor('white')  # fundo da figura
     # ax.set_facecolor('white')
 
     plt.show()
 
+    rgb = img[:3, :, :]
+    depth_img = img[3:4, :, :]
+
+    rgb_plot = rgb.permute(1, 2, 0).numpy()
+
+    depth_img_plot = depth_img.squeeze(0).numpy()
+    depth_vel_plot = depth_vel.squeeze(0).numpy()
+
+    plt.figure(figsize=(10, 5))
+    plt.subplot(1, 3, 1)
+    plt.imshow(rgb_plot)
+    plt.title("RGB")
+    plt.axis("off")
+    plt.subplot(1, 3, 2)
+    plt.imshow(depth_img_plot, cmap='gray')
+    plt.title("Depth Img")
+    plt.axis("off")
+    plt.subplot(1, 3, 3)
+    plt.imshow(depth_vel_plot, cmap='gray')
+    plt.title("Depth Vel")
+    plt.axis("off")
+
+    plt.show()
+
 
 if __name__ == "__main__":
     concat = "depth"
-    mask = "depth"
+    mask = "model"
 
-    dataset = PoseDataset2('all', 1000, concatmethod=concat, maskedmethod=mask)
+    dataset = PoseDataset2('all', 1000, concatmethod=concat, maskedmethod=mask, ruido=True)
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False, num_workers=10)
     
     for data in tqdm(dataset):

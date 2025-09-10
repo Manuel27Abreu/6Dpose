@@ -391,6 +391,7 @@ parser.add_argument('--start_epoch', type=int, default = 1, help='which epoch to
 parser.add_argument('--option', type=int,  required=True, help='opção a executar')
 parser.add_argument('--modalities', type=int, default = 0, help='modalidades a executar')
 parser.add_argument('--model', type=str, default='', help='Backbone')
+parser.add_argument('--noise', type=int, default=0.0025, help='noise probability')
 
 parser.add_argument('--train', action='store_true', help='training mode')
 parser.add_argument('--run', action='store_true', help='run mode')
@@ -495,6 +496,7 @@ if __name__ == '__main__':
     estimator = PoseNetMultiCUSTOMPointsX(modelRGB, modelDepth, modelDepth2, num_points=opt.num_points, num_obj=opt.num_objects, embchannels=embchannels)
     estimator.cuda()
 
+    ruido = False
     if opt.resume_posenet == 'pretrain':
         estimatorfake = PoseNetMultiCUSTOM(modelRGB,modelDepth,modelDepth2, num_points = opt.num_points, num_obj = opt.num_objects, embchannels=embchannels)
 
@@ -504,10 +506,15 @@ if __name__ == '__main__':
         estimator.cnn.encoder.depth_backbone2 = estimatorfake.cnn.encoder.depth_backbone2 
         estimator.cnn.attention_fusion = estimatorfake.cnn.attention_fusion
         estimator.cuda()
+    elif opt.resume_posenet == 'ruido':
+        estimator = PoseNetMultiCUSTOMPointsX(modelRGB, modelDepth, modelDepth2, num_points=opt.num_points, num_obj=opt.num_objects, embchannels=embchannels, noise=opt.noise)
+        estimator.cuda()
 
-    elif opt.resume_posenet != '':
-        print('Loading ', opt.resume_posenet)
-        estimator.load_state_dict(torch.load('{0}/{1}'.format(opt.outf, opt.resume_posenet)))
+        pasta = f"trained_models/{modelString}/8-img_velodyne-model-pc_velodyne-pc_model/7 objetos/All 0.3523"
+
+        estimator.load_state_dict(torch.load(f"{pasta}/pose_model_best.pth"))
+        
+        ruido = True
 
     opt.refine_start = False
     opt.decay_start = False
@@ -517,8 +524,8 @@ if __name__ == '__main__':
         dataset = PoseDatasetSmall('all', opt.num_points, concatmethod=concat, maskedmethod=mask)
         test_dataset = PoseDatasetSmall('all', opt.num_points, concatmethod=concat, maskedmethod=mask)
     else:
-        dataset = PoseDataset('train', opt.num_points, concatmethod=concat, maskedmethod=mask)
-        test_dataset = PoseDataset('test', opt.num_points, concatmethod=concat, maskedmethod=mask)
+        dataset = PoseDataset('train', opt.num_points, concatmethod=concat, maskedmethod=mask, ruido=ruido)
+        test_dataset = PoseDataset('test', opt.num_points, concatmethod=concat, maskedmethod=mask, ruido=ruido)
 
         print(len(dataset))
         print(len(test_dataset))

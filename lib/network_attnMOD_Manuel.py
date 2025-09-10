@@ -1551,9 +1551,10 @@ class PoseNetMultiCUSTOMPointsX(nn.Module):
         return rx, tx, None, emb.detach()
     
 class PoseNetMultiCUSTOMPointsX_old(nn.Module):
-    def __init__(self, modelRGB, modelDepth, modelDepth2, num_points, num_obj, embchannels):
+    def __init__(self, modelRGB, modelDepth, modelDepth2, num_points, num_obj, embchannels, noise=0.0025):
         super(PoseNetMultiCUSTOMPointsX_old, self).__init__()
         self.num_points = num_points
+        self.noise = noise
 
         self.cnn = RGBDFeatureExtractor2CUSTOM(modelRGB,modelDepth, modelDepth2,num_heads=4,emb=embchannels)
         
@@ -1628,17 +1629,18 @@ class PoseNetMultiCUSTOMPointsX_old(nn.Module):
         ap_y = self.net2(emb).contiguous()
         # print("net2", ap_y.shape)
         
-        ap_x, ap_y = self.attn(F.dropout(ap_x, p=0.0025),F.dropout(ap_y, p=0.0025))
+        # MUDAR 20/25
+        ap_x, ap_y = self.attn(F.dropout(ap_x, p=self.noise),F.dropout(ap_y, p=self.noise))
 
         ap_x = ap_x.permute(1, 0, 2) 
         ap_y = ap_y.permute(1, 0, 2) 
 
         ap_x = torch.cat([ap_x, ap_y], 1)
-        ap_x = self.netFinal(F.dropout(ap_x, p=0.0025))
+        ap_x = self.netFinal(F.dropout(ap_x, p=self.noise))
         ap_x = ap_x.permute(1, 0, 2)
         ap_x = ap_x.flatten(start_dim=1)
-        rx = F.tanh(self.compressr2(F.dropout(ap_x, p=0.005)))
-        tx = (self.compresst2(F.dropout(ap_x, p=0.005)))
+        rx = F.tanh(self.compressr2(F.dropout(ap_x, p=self.noise)))
+        tx = (self.compresst2(F.dropout(ap_x, p=self.noise)))
 
         rx = rx.view(batch, self.num_obj, 4)
         tx = tx.view(batch, self.num_obj, 3)
