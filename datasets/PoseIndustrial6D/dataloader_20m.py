@@ -26,16 +26,15 @@ from tqdm import tqdm
 
  
 class PoseDataset2(data.Dataset):
-    def __init__(self, mode="all", num_pt=15000, concatmethod="depth", maskedmethod="depth", ruido=False):
+    def __init__(self, mode="all", num_pt=15000, concatmethod="depth", maskedmethod="depth"):
         self.concatmethod = concatmethod
         self.maskedmethod = maskedmethod
-        self.ruido = ruido
 
-        # self.path_depth = "../Anot Perdiz/results"
-        # self.path_rgb = "../Anot Perdiz/results"
+        self.path_depth = "../Anot Perdiz/results"
+        self.path_rgb = "../Anot Perdiz/results"
 
-        self.path_depth = "../Dataset 6DPose/results"
-        self.path_rgb = "../Dataset 6DPose/results"
+        # self.path_depth = "../Dataset 6DPose/results"
+        # self.path_rgb = "../Dataset 6DPose/results"
 
         all_folders = [d for d in os.listdir(self.path_depth) if os.path.isdir(os.path.join(self.path_depth, d))]
         all_folders.sort()
@@ -110,6 +109,10 @@ class PoseDataset2(data.Dataset):
         indices = list(range(total_examples))
         random.Random(666).shuffle(indices)
 
+        n_base = int(0.9 * total_examples)
+        base_indices = indices[:n_base]      # sem augmentation
+        aug_indices  = indices[n_base:]      # com augmentation
+
         train_split = int(0.8 * total_examples)
 
         if mode == 'train':
@@ -119,19 +122,50 @@ class PoseDataset2(data.Dataset):
         elif mode == 'all':
             selected_indices = indices
 
-        self.list_rgb      = [self.list_rgb[i] for i in selected_indices]
-        self.list_mask     = [self.list_mask[i] for i in selected_indices]
-        self.list_depth    = [self.list_depth[i] for i in selected_indices]
-        self.list_depthV   = [self.list_depthV[i] for i in selected_indices]
-        self.list_depthM   = [self.list_depthM[i] for i in selected_indices]
-        self.list_pc_depth = [self.list_pc_depth[i] for i in selected_indices]
-        self.list_pc_velod = [self.list_pc_velod[i] for i in selected_indices]
-        self.list_pc_model = [self.list_pc_model[i] for i in selected_indices]
-        self.list_label    = [self.list_label[i] for i in selected_indices]
+        self.base_indices = [i for i in base_indices if i in selected_indices]
+        self.aug_indices  = [i for i in aug_indices  if i in selected_indices]
 
+        # guardar listas SEM augmentation
+        self.list_rgb_base      = [self.list_rgb[i] for i in self.base_indices]
+        self.list_mask_base     = [self.list_mask[i] for i in self.base_indices]
+        self.list_depth_base    = [self.list_depth[i] for i in self.base_indices]
+        self.list_depthV_base   = [self.list_depthV[i] for i in self.base_indices]
+        self.list_depthM_base   = [self.list_depthM[i] for i in self.base_indices]
+        self.list_pc_depth_base = [self.list_pc_depth[i] for i in self.base_indices]
+        self.list_pc_velod_base = [self.list_pc_velod[i] for i in self.base_indices]
+        self.list_pc_model_base = [self.list_pc_model[i] for i in self.base_indices]
+        self.list_label_base    = [self.list_label[i] for i in self.base_indices]
+
+        # guardar listas COM augmentation
+        self.list_rgb_aug      = [self.list_rgb[i] for i in self.aug_indices]
+        self.list_mask_aug     = [self.list_mask[i] for i in self.aug_indices]
+        self.list_depth_aug    = [self.list_depth[i] for i in self.aug_indices]
+        self.list_depthV_aug   = [self.list_depthV[i] for i in self.aug_indices]
+        self.list_depthM_aug   = [self.list_depthM[i] for i in self.aug_indices]
+        self.list_pc_depth_aug = [self.list_pc_depth[i] for i in self.aug_indices]
+        self.list_pc_velod_aug = [self.list_pc_velod[i] for i in self.aug_indices]
+        self.list_pc_model_aug = [self.list_pc_model[i] for i in self.aug_indices]
+        self.list_label_aug    = [self.list_label[i] for i in self.aug_indices]
+
+        self.list_rgb      = self.list_rgb_base + self.list_rgb_aug
+        self.list_mask     = self.list_mask_base + self.list_mask_aug
+        self.list_depth    = self.list_depth_base + self.list_depth_aug
+        self.list_depthV   = self.list_depthV_base + self.list_depthV_aug
+        self.list_depthM   = self.list_depthM_base + self.list_depthM_aug
+        self.list_pc_depth = self.list_pc_depth_base + self.list_pc_depth_aug
+        self.list_pc_velod = self.list_pc_velod_base + self.list_pc_velod_aug
+        self.list_pc_model = self.list_pc_model_base + self.list_pc_model_aug
+        self.list_label    = self.list_label_base + self.list_label_aug
+
+        # salvar quantos exemplos têm cada subset
+        self.n_base = len(self.list_rgb_base)
+        self.n_aug  = len(self.list_rgb_aug)
+
+        # comprimento final
         self.length = len(self.list_rgb)
 
     def __getitem__(self, j):
+        is_aug = j >= len(self.list_rgb_base)
         idx = int(re.search(r'class(\d+)', self.list_depth[j]).group(1))
 
         # Load pointclouds
@@ -193,7 +227,7 @@ class PoseDataset2(data.Dataset):
 
         mask = np.expand_dims(mask, axis=-1)
 
-        if self.ruido:
+        if is_aug:
             hsv = cv2.cvtColor(img, cv2.COLOR_RGB2HSV).astype(np.float32)
             h, s, v = cv2.split(hsv)
 
@@ -271,7 +305,7 @@ class PoseDataset2(data.Dataset):
         # vis.draw(geometry=pc_depth_3dd, non_blocking_and_return_uid=True, title='PC DEPTH')
         # vis.draw(geometry=pc_depthvel_3dd, non_blocking_and_return_uid=True, title='PC VEL')
 
-        if self.ruido:
+        if is_aug:
             noise_pc = np.random.normal(loc=0.0, scale=self.noise_pc_std, size=pointcloud_cam_W.shape)
             
             pointcloud_cam_W = pointcloud_cam_W + noise_pc

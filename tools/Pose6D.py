@@ -525,8 +525,8 @@ if __name__ == '__main__':
         dataset = PoseDatasetSmall('all', opt.num_points, concatmethod=concat, maskedmethod=mask)
         test_dataset = PoseDatasetSmall('all', opt.num_points, concatmethod=concat, maskedmethod=mask)
     else:
-        dataset = PoseDataset('train', opt.num_points, concatmethod=concat, maskedmethod=mask, ruido=ruido)
-        test_dataset = PoseDataset('test', opt.num_points, concatmethod=concat, maskedmethod=mask, ruido=ruido)
+        dataset = PoseDataset('train', opt.num_points, concatmethod=concat, maskedmethod=mask)
+        test_dataset = PoseDataset('test', opt.num_points, concatmethod=concat, maskedmethod=mask)
 
         print(len(dataset))
         print(len(test_dataset))
