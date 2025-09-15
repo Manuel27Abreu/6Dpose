@@ -18,6 +18,8 @@ class Metrics:
         self.estimator = estimator
         self.criterion = criterion
         self.discord = discord
+        
+        self.error_thresholds = np.arange(0.05, 0.8, 0.1).tolist()
 
     def compute_metrics(self):
         self.estimator.eval()
@@ -41,12 +43,11 @@ class Metrics:
 
         # <<< novo >>> thresholds de erro para curva accuracy
         num_classes = 7
-        error_thresholds = np.arange(0.05, 0.85, 0.05).tolist()
         
-        correct_by_threshold = [0 for _ in error_thresholds]
+        correct_by_threshold = [0 for _ in self.error_thresholds]
         total_predictions = 0
         
-        correct_by_threshold_class = [[0 for _ in error_thresholds] for _ in range(num_classes)]
+        correct_by_threshold_class = [[0 for _ in self.error_thresholds] for _ in range(num_classes)]
         total_predictions_class = [0 for _ in range(num_classes)]
 
         for i, data in tqdm(enumerate(self.testdataloader, 0), total=len(self.testdataloader), desc=f'', unit='batch'):
@@ -112,21 +113,11 @@ class Metrics:
 
             with torch.no_grad():
                 if self.option == 1:
-                    pred_r, pred_t, pred_c, _ = self.estimator(img, depth_vel*Depth2Enable, model_gt*PC1Enable, velodyne_gt*PC2Enable, choose, idx)
+                    pred_r, pred_t, pred_c, _ = self.estimator(img, depth_vel*Depth2Enable, target*PC1Enable, model_gt*PC2Enable, choose, idx)
                 elif self.option == 2:
                     pred_r, pred_t, pred_c, _ = self.estimator(img, depth_vel*Depth2Enable, target*PC1Enable, velodyne_gt*PC2Enable, choose, idx)
                 elif self.option == 3:
-                    pred_r, pred_t, pred_c, _ = self.estimator(img, depth_vel*Depth2Enable, model_gt*PC1Enable, target*PC2Enable, choose, idx)
-                elif self.option == 4:
-                    pred_r, pred_t, pred_c, _ = self.estimator(img, depth_vel*Depth2Enable, model_gt*PC1Enable, target*PC2Enable, choose, idx)
-                elif self.option == 5:
                     pred_r, pred_t, pred_c, _ = self.estimator(img, depth_vel*Depth2Enable, model_gt*PC1Enable, velodyne_gt*PC2Enable, choose, idx)
-                elif self.option == 6:
-                    pred_r, pred_t, pred_c, _ = self.estimator(img, depth_vel*Depth2Enable, target*PC1Enable, model_gt*PC2Enable, choose, idx) 
-                elif self.option == 7:
-                    pred_r, pred_t, pred_c, _ = self.estimator(img, depth_vel*Depth2Enable, velodyne_gt*PC1Enable, target*PC2Enable, choose, idx)
-                elif self.option == 8:
-                    pred_r, pred_t, pred_c, _ = self.estimator(img, depth_vel*Depth2Enable, velodyne_gt*PC1Enable, model_gt*PC2Enable, choose, idx)
 
             loss, dis, new_points, new_target = self.criterion(pred_r, pred_t, pred_c, modelPointsGT, modelPoints, idx, points, self.opt.w, self.opt.refine_start)
 
@@ -140,13 +131,13 @@ class Metrics:
                 
                 # <<< novo >>> contabilizar para accuracy vs threshold
                 total_predictions += 1
-                for j, th in enumerate(error_thresholds):
+                for j, th in enumerate(self.error_thresholds):
                     if dis_b <= th:
                         correct_by_threshold[j] += 1
 
                 # Por classe <<< novo >>>
                 total_predictions_class[class_idx] += 1
-                for j, th in enumerate(error_thresholds):
+                for j, th in enumerate(self.error_thresholds):
                     if dis_b <= th:
                         correct_by_threshold_class[class_idx][j] += 1
 
@@ -226,9 +217,11 @@ class Metrics:
         # <<< novo >>> calcular accuracy vs threshold
         accuracy_by_threshold = [c / total_predictions for c in correct_by_threshold]
 
+        print(total_predictions_class)
+
         accuracy_by_threshold_class = [
             [correct_by_threshold_class[cls][j] / total_predictions_class[cls] if total_predictions_class[cls] > 0 else 0.0
-            for j in range(len(error_thresholds))]
+            for j in range(len(self.error_thresholds))]
             for cls in range(num_classes)
         ]
 
@@ -318,21 +311,11 @@ class Metrics:
 
             with torch.no_grad():
                 if self.option == 1:
-                    pred_r, pred_t, pred_c, _ = self.estimator(img, depth_vel*Depth2Enable, model_gt*PC1Enable, velodyne_gt*PC2Enable, choose, idx)
+                    pred_r, pred_t, pred_c, _ = self.estimator(img, depth_vel*Depth2Enable, target*PC1Enable, model_gt*PC2Enable, choose, idx)
                 elif self.option == 2:
                     pred_r, pred_t, pred_c, _ = self.estimator(img, depth_vel*Depth2Enable, target*PC1Enable, velodyne_gt*PC2Enable, choose, idx)
                 elif self.option == 3:
-                    pred_r, pred_t, pred_c, _ = self.estimator(img, depth_vel*Depth2Enable, model_gt*PC1Enable, target*PC2Enable, choose, idx)
-                elif self.option == 4:
-                    pred_r, pred_t, pred_c, _ = self.estimator(img, depth_vel*Depth2Enable, model_gt*PC1Enable, target*PC2Enable, choose, idx)
-                elif self.option == 5:
                     pred_r, pred_t, pred_c, _ = self.estimator(img, depth_vel*Depth2Enable, model_gt*PC1Enable, velodyne_gt*PC2Enable, choose, idx)
-                elif self.option == 6:
-                    pred_r, pred_t, pred_c, _ = self.estimator(img, depth_vel*Depth2Enable, target*PC1Enable, model_gt*PC2Enable, choose, idx) 
-                elif self.option == 7:
-                    pred_r, pred_t, pred_c, _ = self.estimator(img, depth_vel*Depth2Enable, velodyne_gt*PC1Enable, target*PC2Enable, choose, idx)
-                elif self.option == 8:
-                    pred_r, pred_t, pred_c, _ = self.estimator(img, depth_vel*Depth2Enable, velodyne_gt*PC1Enable, model_gt*PC2Enable, choose, idx)
 
             loss, dis, new_points, new_target = self.criterion(pred_r, pred_t, pred_c, modelPointsGT, modelPoints, idx, points, self.opt.w, self.opt.refine_start)
 
@@ -509,21 +492,11 @@ class Metrics:
 
             with torch.no_grad():
                 if self.option == 1:
-                    pred_r, pred_t, pred_c, _ = self.estimator(img, depth_vel*Depth2Enable, model_gt*PC1Enable, velodyne_gt*PC2Enable, choose, idx)
+                    pred_r, pred_t, pred_c, _ = self.estimator(img, depth_vel*Depth2Enable, target*PC1Enable, model_gt*PC2Enable, choose, idx)
                 elif self.option == 2:
                     pred_r, pred_t, pred_c, _ = self.estimator(img, depth_vel*Depth2Enable, target*PC1Enable, velodyne_gt*PC2Enable, choose, idx)
                 elif self.option == 3:
-                    pred_r, pred_t, pred_c, _ = self.estimator(img, depth_vel*Depth2Enable, model_gt*PC1Enable, target*PC2Enable, choose, idx)
-                elif self.option == 4:
-                    pred_r, pred_t, pred_c, _ = self.estimator(img, depth_vel*Depth2Enable, model_gt*PC1Enable, target*PC2Enable, choose, idx)
-                elif self.option == 5:
                     pred_r, pred_t, pred_c, _ = self.estimator(img, depth_vel*Depth2Enable, model_gt*PC1Enable, velodyne_gt*PC2Enable, choose, idx)
-                elif self.option == 6:
-                    pred_r, pred_t, pred_c, _ = self.estimator(img, depth_vel*Depth2Enable, target*PC1Enable, model_gt*PC2Enable, choose, idx) 
-                elif self.option == 7:
-                    pred_r, pred_t, pred_c, _ = self.estimator(img, depth_vel*Depth2Enable, velodyne_gt*PC1Enable, target*PC2Enable, choose, idx)
-                elif self.option == 8:
-                    pred_r, pred_t, pred_c, _ = self.estimator(img, depth_vel*Depth2Enable, velodyne_gt*PC1Enable, model_gt*PC2Enable, choose, idx)
 
             loss, dis, new_points, new_target = self.criterion(pred_r, pred_t, pred_c, modelPointsGT, modelPoints, idx, points, self.opt.w, self.opt.refine_start)
 
@@ -584,10 +557,8 @@ class Metrics:
 
         self.discord.post(content=msg)
 
-        error_thresholds = np.arange(0.05, 0.85, 0.05).tolist()
-
         plt.figure(figsize=(8,5))
-        plt.plot(error_thresholds, accuracy_by_threshold, marker='o', label="Global", color="black")
+        plt.plot(self.error_thresholds, accuracy_by_threshold, marker='o', label="Global", color="black")
 
         # Por classe
         colors = ["Orange", "Purple", "Red", "Yellow", "Cyan", "Green", "Blue"]
@@ -595,7 +566,7 @@ class Metrics:
 
         for cls, acc_curve in enumerate(accuracy_by_threshold_class):        
             plt.plot(
-                error_thresholds, 
+                self.error_thresholds, 
                 acc_curve, 
                 linestyle='--', 
                 color=colors[cls], 
@@ -607,7 +578,7 @@ class Metrics:
         plt.xlim(0, 0.8)
         plt.ylim(0, 1)
         plt.legend()
-        plt.xticks(error_thresholds)
+        plt.xticks(self.error_thresholds)
 
         plt.tight_layout()
         plt.savefig("imgs/accuracy_vs_threshold.png", dpi=300)

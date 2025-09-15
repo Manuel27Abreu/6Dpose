@@ -412,45 +412,20 @@ if __name__ == '__main__':
     modelString = opt.model
 
     if opt.option == 1:
-        opt.outf = f'trained_models/{modelString}/1-img_model-velodyne-pc_model-pc_velodyne'
-        concat = "model"
-        mask = "velodyne"
-        print("option1- img_model-velodyne-pc_model-pc_velodyne")
+        opt.outf = f'trained_models/{modelString}/3-img_depth-model-pc_depth-pc_model'
+        concat = "depth"
+        mask = "model"
+        print("option1- img_depth-model-pc_depth-pc_model")
     elif opt.option == 2:
         opt.outf = f'trained_models/{modelString}/2-img_depth-velodyne-pc_depth-pc_velodyne'
         concat = "depth"
         mask = "velodyne"
         print("option2- img_depth-velodyne-pc_depth-pc_velodyne")
-    elif opt.option == 3:
-        opt.outf = f'trained_models/{modelString}/3-img_model-depth-pc_model-pc_depth'
+    elif opt.option == 3:       
+        opt.outf = f'trained_models/{modelString}/1-img_model-velodyne-pc_model-pc_velodyne'
         concat = "model"
-        mask = "depth"
-        print("option3- img_model-depth-pc_model-pc_depth")
-    elif opt.option == 4:
-        opt.outf = f'trained_models/{modelString}/4-img_depth-depth-pc_model-pc_velodyne'
-        concat = "depth"
-        mask = "depth"
-        print("option4- img_depth-depth-pc_model-pc_velodyne")
-    elif opt.option == 5:
-        opt.outf = f'trained_models/{modelString}/5-img_depth-velodyne-pc_model-pc_velodyne'
-        concat = "depth"
         mask = "velodyne"
-        print("option5- img_depth-velodyne-pc_model-pc_velodyne")
-    elif opt.option == 6:
-        opt.outf = f'trained_models/{modelString}/6-img_depth-depth-pc_velodyne-pc_model'
-        concat = "depth"
-        mask = "velodyne"
-        print("option6- img_depth-velodyne-pc_velodyne-pc_model")
-    elif opt.option == 7:
-        opt.outf = f'trained_models/{modelString}/7-img_velodyne-model-pc_velodyne-pc_depth'
-        concat = "velodyne"
-        mask = "model"
-        print("option7- img_velodyne-model-pc_velodyne-pc_depth")
-    elif opt.option == 8:
-        opt.outf = f'trained_models/{modelString}/8-img_velodyne-model-pc_velodyne-pc_model'
-        concat = "velodyne"
-        mask = "model"
-        print("option8- img_velodyne-model-pc_velodyne-pc_model")
+        print("option3- img_model-velodyne-pc_model-pc_velodyne")
 
     opt.num_objects = 7
     opt.num_points = 1000

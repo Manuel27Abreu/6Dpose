@@ -69,6 +69,7 @@ class PoseDataset2(data.Dataset):
         for folder in tqdm(all_folders, desc="Dataloader"):
             f_path = os.path.join(self.path_depth, folder)
             for file in os.scandir(f_path):
+            # for file in sorted(os.scandir(f_path), key=lambda x: x.name):
                 if 'RGB' in file.name:
                     fn = file.name
                     fpls = fn.split('_')

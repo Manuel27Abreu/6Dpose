@@ -12,7 +12,7 @@ from tqdm import tqdm
 
 distance_by_class = defaultdict(list)
 
-dataset = PoseDataset2(mode="test")
+dataset = PoseDataset2(mode="all")
 loader = DataLoader(dataset, batch_size=1, shuffle=False)
 
 for data in tqdm(loader):
@@ -31,7 +31,7 @@ for data in tqdm(loader):
 bins = [0, 5, 10, 15, 20]
 bin_labels = [f'{bins[i]}-{bins[i+1]}' for i in range(len(bins)-1)]
 bin_centers = [(bins[i] + bins[i+1]) / 2 for i in range(len(bins)-1)]
-class_names = ["Industrial Drums", "Boxes", "Forklift Slots", "Extinguishers", "Forklifts", "People", "Toolboxes"]
+class_names = ["Industrial Drums", "Boxes", "Box Slots", "Fire Extinguishers", "Forklifts", "People", "Toolboxes"]
 
 num_classes = len(class_names)
 cols = 4
