@@ -412,7 +412,7 @@ if __name__ == '__main__':
     modelString = opt.model
 
     if opt.option == 1:
-        opt.outf = f'trained_models/{modelString}/3-img_depth-model-pc_depth-pc_model'
+        opt.outf = f'trained_models/{modelString}/1-img_depth-model-pc_depth-pc_model'
         concat = "depth"
         mask = "model"
         print("option1- img_depth-model-pc_depth-pc_model")
@@ -422,7 +422,7 @@ if __name__ == '__main__':
         mask = "velodyne"
         print("option2- img_depth-velodyne-pc_depth-pc_velodyne")
     elif opt.option == 3:       
-        opt.outf = f'trained_models/{modelString}/1-img_model-velodyne-pc_model-pc_velodyne'
+        opt.outf = f'trained_models/{modelString}/3-img_model-velodyne-pc_model-pc_velodyne'
         concat = "model"
         mask = "velodyne"
         print("option3- img_model-velodyne-pc_model-pc_velodyne")
